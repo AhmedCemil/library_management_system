@@ -3,7 +3,7 @@ A Library Management System program created using Python and customtkinter.
 
 Python version is 3.12.1
 
-To run in python, you need to install the version or extract venvbootcamp.rar to its current folder.
+To run in python, you need to install the version and necessary libraries via req.txt or extract venvbootcamp.rar to its current folder.
 
 Tested on both Windows 10 and Windows 11.
 
