@@ -6,7 +6,7 @@ from tabulate import tabulate
 from config.settings import *
 
 # Ahmed Cemil Bilgin tarafından Global AI Hub: Akbank Python Bootcamp için hazırlanmıştır.
-# Teslim tarihi: 19.02.2024
+# Teslim tarihi: 18.02.2024
 
 class Book:
     def __init__(self, title, author, first_release_year, number_of_pages):
@@ -18,8 +18,9 @@ class Book:
     def __str__(self):
         return f"{self.title}: {self.author}, {self.first_release_year}, {self.number_of_pages} pages"
 
-
+# 1. Create a class named “Library”
 class Library:
+    # 1.a Create  the  constructer  method  to  open  the  books.txt  file,  and  destructor method to close the file.
     def __init__(self, filename, parent):
         self.filename = filename
         self.parent = parent
@@ -48,7 +49,9 @@ class Library:
         books = []
         if self.file is not None:
             self.file.seek(0)
-            for line in self.file:
+            data = self.file.read()
+            _splitlines = data.splitlines()
+            for line in _splitlines:
                 if line == "\n":
                     pass
                 title, author, first_release_year, number_of_pages = (
@@ -63,7 +66,9 @@ class Library:
 
     def write_books(self):
         self.file.seek(0)
+        # 2.c.v. Remove the contents of the books.txt.
         self.file.truncate()
+        # 2.c.vi. Add all elements of the list to the books.txt.
         for book in self.books:
             self.file.write(
                 f"{book.title.replace("\n","")},{book.author.replace("\n","")},{book.first_release_year.replace("\n","")},{book.number_of_pages.replace("\n","")}"
@@ -92,25 +97,33 @@ class Library:
                     return_str += line[i] + " | "
                 return_str += "\n"
         return return_str
-
+    
+    # 2.a. List Books: This method will list all the books in the books.txt file.
     def list_books(self):
+        # 2.a.1. Read the contents of the file.
+        # 2.a.2. Add each line to a list using splitlines() method of the string object.
+        self._read_books()
         if not self.books:
             return_str = locale.get("No books found in the library.")
         else:
             return_str = f"""*** {locale.get("Library Books' List")} ***\n"""
             headers = [locale.get("Line"), locale.get("Title"), locale.get("Author"), locale.get("First Release Year"), locale.get("Number of Pages")]
             data = []
+            # 2.a.3. Now  each  element  of  the  list  holds  information  about  a  single  book. Print book names and authors using this information.
             for i, book in enumerate(self.books):
                 data.append([str(i+1), book.title, book.author, book.first_release_year, book.number_of_pages])
             return_str = tabulate(data, headers=headers)
         return return_str
-
+    
+    # 2.b. Add Book: This method will add a book to a books.txt file.
     def add_book(self, book):
         self.books.append(book)
+        # 2.b.iii. Append this line to the file.
         self.write_books()
         self._read_books()
         return f"""{locale.get("Book")} '{book.title}' {locale.get("added successfully!")}"""
 
+    # 2.c. Remove Book: This method will delete the book with the given title from the books.txt.
     def remove_book(self, title):
         # this code for searching title inside books titles. This way user can write any part of the title of the book.
         # count = 1
@@ -120,9 +133,15 @@ class Library:
         # if count > 1:
         #     return f"Found {title} {count} times. Please write full title of the book."
 
+        # 2.c.ii. Read  the  file  contents  and  add  book  to  a  list  (just  like  you  did  while creating a list books method)
+        self._read_books()
         for i, book in enumerate(self.books):
+            # 2.c.iii. Find the index of the book to be deleted in the list.
             if book.title == title:
+                # 2.c.iv. Remove the book from the list
                 del self.books[i]
+                # 2.c.v. Remove the contents of the books.txt.
+                # 2.c.vi. Add all elements of the list to the books.txt.
                 self.write_books()
                 self._read_books()
                 return True, f"""{locale.get("Book")} '{title}' {locale.get("removed successfully!")}"""
@@ -149,14 +168,19 @@ class App(ctk.CTk):
         self.columnconfigure(index=(0, 1, 2), weight=1, uniform="form_layout")
 
         # objects
+        # 3. Create an object named “lib” with “Library” class.
         self.lib = Library(filename="books.txt", parent=self)
         self.scenerio = [1, 0]
 
         # widgets
         self.placement = Placement(self)
+        # 4. Create a menu to interact with the “lib” object.
+        # 4.b. Ask user input for menu item and assign the input to a variable.
         self.menu_panel = MenuPanel(self)
         self.add_book_panel = AddBookPanel(self)
         self.remove_book_panel = RemoveBookPanel(self)
+        # 4.a. Print the following to the screen: ***Menu***...
+        # 4.b. Ask user input for menu item and assign the input to a variable.
         self.terminal_panel = TerminalPanel(self)
 
         self.select_page(1, True)
@@ -373,6 +397,7 @@ class MenuPanel(ctk.CTkFrame):
             self.grid_remove()
 
     def func_list_books(self):
+        # 4.d. According to the user input, run the relevant method of the “lib” object.
         self.parent.terminal_panel.add_to_terminal("\n" + self.parent.lib.list_books())
         self.parent.scenerio = [1, 0]
         self.parent.terminal_panel.clear_textbox()
@@ -618,17 +643,14 @@ class AddBookPanel(ctk.CTkFrame):
             return
 
         for book in self.parent.lib.books:
-            if (
-                title
-                in book.title
-            ):
+            if title == book.title:
                 self.parent.terminal_panel.add_to_terminal(
                     f"""\n{locale.get("The book is already in the library, please remove it first or add different book.")}"""
                 )
                 return
-
+        # 2.b.ii. Create a string with this information. Add book title then comma then author then comma etc.
         book = Book(title, author, book_first_release_year, book_number_of_pages)
-
+        # 4.d. According to the user input, run the relevant method of the “lib” object.
         self.parent.terminal_panel.add_to_terminal(self.parent.lib.add_book(book))
         self.func_return_to_menu()
 
@@ -764,6 +786,7 @@ class RemoveBookPanel(ctk.CTkFrame):
         self.book_title_textbox.delete("0.0", "end")  # delete all text
 
     def func_apply_remove(self):
+        # 4.d. According to the user input, run the relevant method of the “lib” object.
         isDone, _str = self.parent.lib.remove_book(
             self.book_title_textbox.get("0.0", "end").replace("\n", "")
         )
@@ -900,6 +923,7 @@ class TerminalPanel(ctk.CTkFrame):
         self.send_textbox.delete("0.0", "end")  # delete all text
 
     def func_send(self):
+        # 4.b. Ask user input for menu item and assign the input to a variable.
         _str = self.send_textbox.get("0.0", "end").replace("\n", "")
         if _str == "":
             return
@@ -907,6 +931,7 @@ class TerminalPanel(ctk.CTkFrame):
             self.terminal_string.get() + _str
         )
         self.clear_textbox()
+        # 4.c. Using if-elif-else statement check the user input.
         if self.parent.scenerio[0] == 1:  # Menu
             if self.parent.scenerio[1] == 0 and _str not in "1234":
                 self.add_to_terminal(f"{locale.get("Please enter 1 to 4.")}\n")
@@ -919,11 +944,13 @@ class TerminalPanel(ctk.CTkFrame):
             
             elif self.parent.scenerio[1] == 0 and _str == "2":  # Add Book
                 self.parent.menu_panel.func_add_book()
+                # 2.b.i. Ask user input for book title, book author, first release year and number of pages
                 self.add_to_terminal(f"""{locale.get("Enter book's title")}: """)
                 return
             
             elif self.parent.scenerio[1] == 0 and _str == "3":  # Remove Book
                 self.parent.menu_panel.func_remove_book()
+                # 2.c.i. Ask the user input for book title.
                 self.add_to_terminal(f"""{locale.get("Enter book's title")}: """)
                 return
             
@@ -968,12 +995,14 @@ class TerminalPanel(ctk.CTkFrame):
                         )
                         self.parent.select_page(1)
                         return
-
+                # 2.b.ii. Create a string with this information. Add book title then comma then author then comma etc.
                 book = Book(self.book_title, self.book_author, self.book_first_release_year, self.book_number_of_pages)
+                # 4.d. According to the user input, run the relevant method of the “lib” object.
                 self.add_to_terminal(self.parent.lib.add_book(book))
                 self.parent.select_page(1)
         
         elif self.parent.scenerio[0] == 3:  # Remove Book page
+            # 4.d. According to the user input, run the relevant method of the “lib” object.
             isDone, _str = self.parent.lib.remove_book(_str)
             self.parent.terminal_panel.add_to_terminal(_str)
             if isDone:
