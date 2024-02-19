@@ -599,7 +599,6 @@ class AddBookPanel(ctk.CTkFrame):
         book_number_of_pages = self.book_number_of_pages_textbox.get("0.0", "end").replace("\n", "")
 
         if "" in [author, title, book_first_release_year, book_number_of_pages]:
-            print("hey")
             return
 
         try:
