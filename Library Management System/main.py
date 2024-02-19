@@ -20,39 +20,57 @@ class Book:
 
 
 class Library:
-    def __init__(self, filename):
+    def __init__(self, filename, parent):
         self.filename = filename
+        self.parent = parent
         self.books = []
+        self.file = None
+        try:
+            self.file = open(self.filename, "a+")
+        except FileNotFoundError:
+            messagebox.showerror(f"""{locale.get("File Not Found Error")}""", f"""{locale.get("Error")}: {self.filename} {locale.get("file not found")}.\n{locale.get("Program will be closed")}.""")
+            self.exit_program_on_error()
+        except PermissionError:
+            messagebox.showerror(f"""{locale.get("Permission Error")}""", f"""{locale.get("Error")}: {locale.get("Permission denied")}: '{self.filename}'.\n{locale.get("Program will be closed")}.""")
+            self.exit_program_on_error()
+
         self._read_books()
+
+    def __del__(self):
+        self.write_books()
+        self.file.close()
+
+    def exit_program_on_error(self):
+        # CustomTkinter root.quit()
+        self.parent.on_close()
 
     def _read_books(self):
         books = []
-        try:
-            with open(self.filename, "a+") as file:
-                file.seek(0)
-                for line in file:
-                    if line == "\n":
-                        pass
-                    title, author, first_release_year, number_of_pages = (
-                        line.strip().split(",")
+        if self.file is not None:
+            self.file.seek(0)
+            for line in self.file:
+                if line == "\n":
+                    pass
+                title, author, first_release_year, number_of_pages = (
+                    line.strip().split(",")
+                )
+                books.append(
+                    Book(
+                        title, author, first_release_year, number_of_pages
                     )
-                    books.append(
-                        Book(
-                            title, author, first_release_year, number_of_pages
-                        )
-                    )
-        except FileNotFoundError:
-            messagebox.showerror(f"""{locale.get("File Not Found Error")}""", f"""{locale.get("Error")}: {self.filename} {locale.get("file not found")}.""")
-        except PermissionError:
-            messagebox.showerror(f"""{locale.get("Permission Error")}""", f"""{locale.get("Error")}: {locale.get("Permission denied")}: '{self.filename}'.""")
+                )
         self.books = books
 
     def write_books(self):
-        with open(self.filename, "w") as file:
-            for book in self.books:
-                file.write(
-                    f"{book.title.replace("\n","")},{book.author.replace("\n","")},{book.first_release_year.replace("\n","")},{book.number_of_pages.replace("\n","")}\n"
-                )
+        self.file.seek(0)
+        self.file.truncate()
+        for book in self.books:
+            self.file.write(
+                f"{book.title.replace("\n","")},{book.author.replace("\n","")},{book.first_release_year.replace("\n","")},{book.number_of_pages.replace("\n","")}"
+            )
+            if self.books.index(book) != len(self.books) - 1:
+                self.file.write("\n")
+
     # custom prettier table
     def make_pretty_table(self, headers, data):
         headers_lengths = [0] * len(headers)
@@ -106,6 +124,7 @@ class Library:
             if book.title == title:
                 del self.books[i]
                 self.write_books()
+                self._read_books()
                 return True, f"""{locale.get("Book")} '{title}' {locale.get("removed successfully!")}"""
         return False, f"""{locale.get("Book")} '{title}' {locale.get("not found in the library.")}"""
 
@@ -114,6 +133,7 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__(fg_color=CTK_COLOR)
         self.configure(cursor="wait")
+        self.bind("<Destroy>", self.on_close)
 
         # window setup
         self.iconbitmap(LOGO_FOLDER_PATH + r"\lib_light.ico")
@@ -129,7 +149,7 @@ class App(ctk.CTk):
         self.columnconfigure(index=(0, 1, 2), weight=1, uniform="form_layout")
 
         # objects
-        self.lib = Library("books.txt")
+        self.lib = Library(filename="books.txt", parent=self)
         self.scenerio = [1, 0]
 
         # widgets
@@ -167,7 +187,10 @@ class App(ctk.CTk):
         self.select_page(1)
         self.terminal_panel.initialize()
         self.scenerio = [1, 0]
-        pass
+    
+    def on_close(self, event=None):
+        # del self.lib
+        self.quit()
 
 
 class Placement(ctk.CTkFrame):
@@ -570,8 +593,17 @@ class AddBookPanel(ctk.CTkFrame):
         self.book_number_of_pages_textbox.delete("0.0", "end")  # delete all text
 
     def func_apply_add(self):
+        author = self.book_author_textbox.get("0.0", "end").replace("\n", "")
+        title = self.book_title_textbox.get("0.0", "end").replace("\n", "")
+        book_first_release_year = self.book_first_release_year_textbox.get("0.0", "end").replace("\n", "")
+        book_number_of_pages = self.book_number_of_pages_textbox.get("0.0", "end").replace("\n", "")
+
+        if "" in [author, title, book_first_release_year, book_number_of_pages]:
+            print("hey")
+            return
+
         try:
-            book_first_release_year = self.book_first_release_year_textbox.get("0.0", "end")
+            int(book_first_release_year)
         except ValueError:
             self.parent.terminal_panel.add_to_terminal(
                 "\nPlease enter only integer value in first release year input."
@@ -579,7 +611,7 @@ class AddBookPanel(ctk.CTkFrame):
             return
 
         try:
-            book_number_of_pages = self.book_number_of_pages_textbox.get("0.0", "end")
+            int(book_number_of_pages)
         except ValueError:
             self.parent.terminal_panel.add_to_terminal(
                 f"""\n{locale.get("Please enter only integer value in number of pages input.")}"""
@@ -588,16 +620,13 @@ class AddBookPanel(ctk.CTkFrame):
 
         for book in self.parent.lib.books:
             if (
-                self.book_title_textbox.get("0.0", "end").replace("\n", "")
+                title
                 in book.title
             ):
                 self.parent.terminal_panel.add_to_terminal(
                     f"""\n{locale.get("The book is already in the library, please remove it first or add different book.")}"""
                 )
                 return
-
-        title = self.book_title_textbox.get("0.0", "end").replace("\n", "")
-        author = self.book_author_textbox.get("0.0", "end").replace("\n", "")
 
         book = Book(title, author, book_first_release_year, book_number_of_pages)
 
@@ -849,7 +878,7 @@ class TerminalPanel(ctk.CTkFrame):
 
         self.clear_button = ctk.CTkButton(
             master=self,
-            command=self.func_send,
+            command=self.clear_textbox,
             text=locale.get(self.clear_button_string.get()),
             font=ctk.CTkFont(family=FONT, size=BUTTON_FONT_SIZE, weight="bold"),
             text_color=BUTTON_TEXT_COLOR,
@@ -873,6 +902,8 @@ class TerminalPanel(ctk.CTkFrame):
 
     def func_send(self):
         _str = self.send_textbox.get("0.0", "end").replace("\n", "")
+        if _str == "":
+            return
         self.terminal_string.set(
             self.terminal_string.get() + _str
         )
@@ -898,7 +929,7 @@ class TerminalPanel(ctk.CTkFrame):
                 return
             
             elif self.parent.scenerio[1] == 0 and _str == "4": #  Quit
-                self.parent.quit()
+                self.parent.on_close()
         
         elif self.parent.scenerio[0] == 2:  # Add Book Page
             if self.parent.scenerio[1] == 0:  # Title
@@ -914,7 +945,7 @@ class TerminalPanel(ctk.CTkFrame):
             elif self.parent.scenerio[1] == 2:  # First Release Year
                 self.book_first_release_year = _str
                 try:
-                    check = int(_str)
+                    int(_str)
                 except ValueError:
                     self.add_to_terminal(locale.get("Please enter only integer value in first release year input."))
                     self.add_to_terminal(f"""\n{locale.get("Enter book's first released year")}: """)
@@ -925,7 +956,7 @@ class TerminalPanel(ctk.CTkFrame):
             elif self.parent.scenerio[1] == 3:  # Number of Pages
                 self.book_number_of_pages = _str
                 try:
-                    check = int(_str)
+                    int(_str)
                 except ValueError:
                     self.parent.terminal_panel.add_to_terminal(locale.get("Please enter only integer value in number of pages input."))
                     self.add_to_terminal(f"""\n{locale.get("Enter book's number of pages")}: """)
