@@ -7,7 +7,7 @@ To run in python, you need to install the version and necessary libraries via re
 
 Tested on both Windows 10 and Windows 11.
 
-You can run the program using ACB_Libray_Management_System.exe in "Library Management System\EXE" folder. You need to keep images folder in the sane folder with the exe file.
+You can run the program using ACB_Libray_Management_System.exe in "Library Management System\EXE" folder. You need to keep images folder in the same folder with the exe file.
 
 This program created for Global AI Hub: Akbank Python Bootcamp.
 
