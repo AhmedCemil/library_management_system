@@ -38,7 +38,6 @@ class Library:
         self._read_books()
 
     def __del__(self):
-        self.write_books()
         self.file.close()
 
     def exit_program_on_error(self):
@@ -213,7 +212,6 @@ class App(ctk.CTk):
         self.scenerio = [1, 0]
     
     def on_close(self, event=None):
-        # del self.lib
         self.quit()
 
 
