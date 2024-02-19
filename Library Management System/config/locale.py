@@ -226,11 +226,15 @@ LOCALE = {
     },
     "Enter book's first released year": {
         "en": "Enter book's first released year",
-        "tr": "Kitabın ilk basım yılını giriniz: ",
+        "tr": "Kitabın ilk basım yılını giriniz",
     },
     "Enter book's number of pages": {
         "en": "Enter book's number of pages",
-        "tr": "Kitabın sayfa sayısını giriniz.",
+        "tr": "Kitabın sayfa sayısını giriniz",
+    },
+    "Program will be closed": {
+        "en": "Program will be closed",
+        "tr": "Program kapanacaktır",
     },
     # endregion
 }
