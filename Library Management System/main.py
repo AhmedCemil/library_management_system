@@ -6,7 +6,7 @@ from tabulate import tabulate
 from config.settings import *
 
 # Ahmed Cemil Bilgin tarafından Global AI Hub: Akbank Python Bootcamp için hazırlanmıştır.
-# Teslim tarihi: 18.02.2024
+# Teslim tarihi: 19.02.2024
 
 class Book:
     def __init__(self, title, author, first_release_year, number_of_pages):
